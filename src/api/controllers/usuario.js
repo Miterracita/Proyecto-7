@@ -1,4 +1,4 @@
-const { generateSing } = require("../../config/jwt");
+const { generateSing } = require("../../utils/jwt");
 const User = require("../models/Usuario");
 const bcrypt = require("bcrypt");
 
@@ -6,14 +6,10 @@ const bcrypt = require("bcrypt");
 const registro = async (req, res, next) => {
   try {
 
-    const newUser = new User({
-      email: req.body.email,
-      nombreUsuario: req.body.nombreUsuario,
-      password: req.body.password,
-      añoNacimiento: req.body.añoNacimiento,
-      rol: req.body.rol,
-      imagenPerfil: req.body.imagenPerfil
-    });
+    const newUser = new User(req.body);
+
+    //al crear un usuario asignaremos por defecto el rol user
+    newUser.rol = "user";
 
     //comprobamos si un nombre de usuario ya existe
     const userDuplicated = await User.findOne ({
@@ -23,12 +19,9 @@ const registro = async (req, res, next) => {
     //si un usuario ya existe nos salta un mensaje de aviso y no crea el nuevo usuario
     if (userDuplicated) {
       return res.status(400).json("Ese nombre de usuario ya existe");
-    }
-    
-    console.log(userDuplicated);
+    }  
 
     const userSaved = await newUser.save();
-
     return res.status(201).json(userSaved);
 
   } catch (error) {
@@ -76,7 +69,7 @@ const deleteUser = async (req, res, next) => {
     return res.status(400).json(error);
   }
 }
-
+//ver todos los usuarios
 const getUsers = async (req, res, next) => {
 
   try {
@@ -87,4 +80,21 @@ const getUsers = async (req, res, next) => {
     return res.status(400).json(error);
   }
 }
-module.exports = { registro, login, deleteUser, getUsers };
+
+//actualizar un usuario (por ID)
+const updateUser = async (req, res, next) => {
+  try {
+      const { id } = req.params;
+      const newUsuario = new User(req.body);
+      newUsuario._id = id;
+
+      const userActualizado = await User.findByIdAndUpdate(id, newUsuario, { new: true, });
+      console.log(userActualizado);
+      return res.status(200).json(userActualizado);
+
+  } catch (error){
+      return res.status(400).json("error al actualizar el usuario");
+  }
+}
+
+module.exports = { registro, login, deleteUser, getUsers, updateUser };
