@@ -7,6 +7,6 @@ userRoutes.post("/login", login);
 //isAdmin nos limina a sólo el tipo de usuario indicado en el middlewares (admin) pueda o no ejecutar esta función
 userRoutes.delete("/:id", [isAdmin], deleteUser);
 userRoutes.get("/", [isAuth], getUsers);
-userRoutes.put("/:id", [isAdmin], updateUser);
+userRoutes.put("/:id", [isAuth], updateUser);
 
 module.exports = userRoutes;

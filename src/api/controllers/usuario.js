@@ -82,15 +82,33 @@ const getUsers = async (req, res, next) => {
 }
 
 //actualizar un usuario (por ID)
+
 const updateUser = async (req, res, next) => {
   try {
       const { id } = req.params;
       const newUsuario = new User(req.body);
       newUsuario._id = id;
 
-      const userActualizado = await User.findByIdAndUpdate(id, newUsuario, { new: true, });
-      console.log(userActualizado);
-      return res.status(200).json(userActualizado);
+      if (req.user.rol === 'admin') {
+        // Si es un administrador, permite modificar el rol del usuario
+        const userActualizado = await User.findByIdAndUpdate(id, newUsuario, { new: true, });
+        console.log(`acabas de actualizar el siguiente usuario ${userActualizado}`);
+        return res.status(200).json(userActualizado);
+
+      } else {
+        // Si no es un administrador, verifica si está modificando su propio perfil
+        const usuarioActual = await User.findById(id);
+        
+        if (usuarioActual._id.toString() === req.user._id.toString() ) {
+          // Si es el mismo usuario, permite cambiar todos los datos excepto el rol
+          const userActualizado = await User.findByIdAndUpdate(id, newUsuario, { new: true, });
+          console.log(`acabas de actualizar tu propio usuario ${userActualizado}`);
+          return res.status(200).json(userActualizado);
+        } else {
+          // Si no es el mismo usuario, no puede continuar
+          return res.status(403).json("No tienes permiso para modificar este usuario.");
+        }
+      }
 
   } catch (error){
       return res.status(400).json("error al actualizar el usuario");
